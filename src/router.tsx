@@ -3,6 +3,7 @@ import PrivateRoute from './auth/PrivateRoute'
 import PublicOnlyRoute from './auth/PublicOnlyRoute'
 import Layout from './components/Layout'
 import Placeholder from './components/Placeholder'
+import WantedListPage from './features/wanted/WantedListPage'
 
 export const router = createBrowserRouter([
   // Públicas: solo si NO hay sesión
@@ -22,7 +23,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <Navigate to="/dashboard" replace /> },
           { path: '/dashboard', element: <Placeholder name="Dashboard" /> },
-          { path: '/wanted', element: <Placeholder name="Se Busca" /> },
+          { path: '/wanted', element: <WantedListPage /> },
           { path: '/wanted/:id', element: <Placeholder name="Detalle del cartel" /> },
           { path: '/news', element: <Placeholder name="Noticias" /> },
           { path: '/news/:id', element: <Placeholder name="Detalle de noticia" /> },
