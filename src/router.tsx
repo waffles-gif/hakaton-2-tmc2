@@ -4,6 +4,7 @@ import PublicOnlyRoute from './auth/PublicOnlyRoute'
 import Layout from './components/Layout'
 import Placeholder from './components/Placeholder'
 import WantedDetail from './features/wanted/WantedDetail'
+import WantedListPage from './features/wanted/WantedListPage'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
@@ -27,7 +28,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <Navigate to="/dashboard" replace /> },
           { path: '/dashboard', element: <Dashboard /> },
-          { path: '/wanted', element: <Placeholder name="Se Busca" /> },
+          { path: '/wanted', element: <WantedListPage /> },
           { path: '/wanted/:id', element: <WantedDetail /> },
           { path: '/news', element: <Placeholder name="Noticias" /> },
           { path: '/news/:id', element: <Placeholder name="Detalle de noticia" /> },

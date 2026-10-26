@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-// Acordar con A: apiGet<T>(path, signal) agrega el token y lanza error si la respuesta no es ok.
-import { apiGet } from '../../api/client';
-import { useDebounce } from '../../hooks/useDebounce';
+// Cliente axios de A: agrega el token, usa VITE_API_BASE_URL y maneja el 401.
+import { api } from '../../api/client';
+import { useDebouncedCallback } from '../../hooks/useDebounce';
 import {
   FRUIT_LABELS,
   FRUIT_TYPES,
@@ -16,10 +16,12 @@ import {
 } from './types';
 import { useWantedParams, type WantedParams } from './useWantedParams';
 
-type ListState =
-  | { kind: 'loading'; data: WantedPage | null }
-  | { kind: 'error'; data: WantedPage | null }
-  | { kind: 'success'; data: WantedPage };
+// `key` dice a qué request corresponde este resultado (filtros + reintento).
+interface ListResult {
+  key: string;
+  data: WantedPage | null;
+  failed: boolean;
+}
 
 const SKELETON_ROWS = 10;
 const berries = new Intl.NumberFormat('es-PE');
@@ -35,31 +37,27 @@ function buildQuery(p: WantedParams): string {
 
 export default function WantedListPage() {
   const { params, update } = useWantedParams();
-  const [state, setState] = useState<ListState>({ kind: 'loading', data: null });
+  const [result, setResult] = useState<ListResult>({ key: '', data: null, failed: false });
   const [retryCount, setRetryCount] = useState(0);
   const [crews, setCrews] = useState<Crew[]>([]);
 
-  // Búsqueda: el input tiene estado local y la URL se actualiza solo tras el debounce.
+  // Búsqueda: el input tiene estado local y la URL se actualiza 400 ms después de la última tecla.
   const [qInput, setQInput] = useState(params.q);
-  const debouncedQ = useDebounce(qInput, 400);
-  const urlQ = useRef(params.q);
-  urlQ.current = params.q;
+  const [syncedQ, setSyncedQ] = useState(params.q);
+  const searchDebounce = useDebouncedCallback((value: string) => update({ q: value.trim() }), 400);
 
-  // Atrás/adelante cambia la URL → el input refleja ese valor.
-  useEffect(() => {
-    setQInput(params.q);
-  }, [params.q]);
-
-  useEffect(() => {
-    const q = debouncedQ.trim();
-    if (q !== urlQ.current) update({ q });
-  }, [debouncedQ, update]);
+  // Atrás/adelante cambió la q de la URL → el input muestra ese valor.
+  if (syncedQ !== params.q) {
+    setSyncedQ(params.q);
+    if (qInput.trim() !== params.q) setQInput(params.q);
+  }
 
   // Tripulaciones para el filtro.
   useEffect(() => {
     const controller = new AbortController();
-    apiGet<Crew[]>('/crews', controller.signal)
-      .then(setCrews)
+    api
+      .get<Crew[]>('/crews', { signal: controller.signal })
+      .then((res) => setCrews(res.data))
       .catch(() => {
         // Sin tripulaciones el filtro queda vacío; el listado sigue funcionando.
       });
@@ -67,13 +65,15 @@ export default function WantedListPage() {
   }, []);
 
   // Listado. Cada cambio aborta la request anterior: una respuesta vieja nunca se pinta.
+  // Está cargando mientras el último resultado no corresponde a lo que pide la URL.
   const query = buildQuery(params);
+  const requestKey = `${query}#${retryCount}`;
   useEffect(() => {
     const controller = new AbortController();
-    setState((prev) => ({ kind: 'loading', data: prev.data }));
 
-    apiGet<WantedPage>(`/wanted?${query}`, controller.signal)
-      .then((data) => {
+    api
+      .get<WantedPage>(`/wanted?${query}`, { signal: controller.signal })
+      .then(({ data }) => {
         if (controller.signal.aborted) return;
         // La página pedida ya no existe (p. ej. URL vieja): ir a la última que sí existe.
         const lastPage = Math.max(data.totalPages - 1, 0);
@@ -81,18 +81,20 @@ export default function WantedListPage() {
           update({ page: lastPage }, { replace: true });
           return;
         }
-        setState({ kind: 'success', data });
+        setResult({ key: requestKey, data, failed: false });
       })
       .catch(() => {
         if (controller.signal.aborted) return;
-        setState((prev) => ({ kind: 'error', data: prev.data }));
+        // Se conservan los datos anteriores; solo se marca el error.
+        setResult((prev) => ({ key: requestKey, data: prev.data, failed: true }));
       });
 
     return () => controller.abort();
-  }, [query, retryCount, update]);
+  }, [query, requestKey, update]);
 
-  const data = state.data;
-  const isLoading = state.kind === 'loading';
+  const data = result.data;
+  const isLoading = result.key !== requestKey;
+  const hasError = !isLoading && result.failed;
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
 
   return (
@@ -112,7 +114,10 @@ export default function WantedListPage() {
           placeholder="Nombre o epíteto…"
           maxLength={100}
           value={qInput}
-          onChange={(e) => setQInput(e.target.value)}
+          onChange={(e) => {
+            setQInput(e.target.value);
+            searchDebounce.run(e.target.value);
+          }}
         />
 
         <select
@@ -177,7 +182,7 @@ export default function WantedListPage() {
 
       {/* Altura mínima fija: loading, error y vacío no mueven el layout. */}
       <div className="relative min-h-[36rem]" aria-busy={isLoading}>
-        {state.kind === 'error' && (
+        {hasError && (
           <div role="alert" className="mb-2 flex items-center justify-between rounded border border-red-300 bg-red-50 p-3 text-red-800">
             <span>No se pudieron cargar los carteles.</span>
             <button
@@ -198,7 +203,7 @@ export default function WantedListPage() {
           </ul>
         )}
 
-        {data && data.content.length === 0 && state.kind === 'success' && (
+        {data && data.content.length === 0 && !isLoading && !hasError && (
           <p className="p-12 text-center text-gray-500">No hay carteles con estos filtros.</p>
         )}
 

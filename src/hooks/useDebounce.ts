@@ -1,13 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-/** Devuelve `value` solo después de que deja de cambiar durante `delay` ms. */
-export function useDebounce<T>(value: T, delay = 400): T {
-  const [debounced, setDebounced] = useState(value);
+/**
+ * Debounce de una función: `run` solo ejecuta `fn` cuando pasan `delay` ms sin otra llamada.
+ * Se usa para no hacer una request por cada tecla.
+ */
+export function useDebouncedCallback<A extends unknown[]>(fn: (...args: A) => void, delay = 400) {
+  const fnRef = useRef(fn);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
+    fnRef.current = fn;
+  }, [fn]);
 
-  return debounced;
+  // Al desmontar, no dejar un timeout pendiente.
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const run = useCallback(
+    (...args: A) => {
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => fnRef.current(...args), delay);
+    },
+    [delay],
+  );
+
+  const cancel = useCallback(() => clearTimeout(timer.current), []);
+
+  return useMemo(() => ({ run, cancel }), [run, cancel]);
 }
