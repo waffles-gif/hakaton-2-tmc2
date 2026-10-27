@@ -77,10 +77,22 @@ export default function NewsDetail() {
 
   // Cerrar: atrás en el historial vuelve al feed con sus filtros (el feed nunca se desmontó).
   // Si se abrió el link directo, no hay historial dentro de la app: vamos a /news.
+  const openedFromApp = location.key !== 'default'
   function close() {
-    if (location.key !== 'default') navigate(-1)
+    if (openedFromApp) navigate(-1)
     else navigate('/news')
   }
+
+  // Escape cierra aunque el foco no esté dentro del diálogo (p. ej. si el botón enfocado desapareció)
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return
+      if (openedFromApp) navigate(-1)
+      else navigate('/news')
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [openedFromApp, navigate])
 
   function retry() {
     setResult(null)
@@ -121,9 +133,6 @@ export default function NewsDetail() {
         aria-labelledby="news-title"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()} // clic dentro no cierra
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') close()
-        }}
         className="my-8 w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl focus:outline-none"
       >
         <div className="mb-4 flex justify-end">
