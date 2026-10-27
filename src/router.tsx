@@ -3,6 +3,7 @@ import PrivateRoute from './auth/PrivateRoute'
 import PublicOnlyRoute from './auth/PublicOnlyRoute'
 import Layout from './components/Layout'
 import Placeholder from './components/Placeholder'
+import SagaStoryPage from './features/sagas/SagaStoryPage'
 import WantedDetail from './features/wanted/WantedDetail'
 import WantedListPage from './features/wanted/WantedListPage'
 import Dashboard from './pages/Dashboard'
@@ -33,7 +34,7 @@ export const router = createBrowserRouter([
           { path: '/news', element: <Placeholder name="Noticias" /> },
           { path: '/news/:id', element: <Placeholder name="Detalle de noticia" /> },
           { path: '/sagas', element: <Placeholder name="Sagas" /> },
-          { path: '/sagas/:id', element: <Placeholder name="Historia de la saga" /> },
+          { path: '/sagas/:id', element: <SagaStoryPage /> },
         ],
       },
     ],

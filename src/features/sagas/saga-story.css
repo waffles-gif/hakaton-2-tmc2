@@ -1,0 +1,95 @@
+/* Historia de la saga.
+   Sin preferencia de movimiento: transiciones + CSS Scroll-driven Animations (si el navegador las soporta).
+   Con prefers-reduced-motion: todo se ve y se entiende igual, pero sin animaciones. */
+
+/* Barra de progreso: por defecto la mueve JS con --saga-progress (fallback sin scroll-driven) */
+.saga-progress-fill {
+  transform-origin: left center;
+  transform: scaleX(var(--saga-progress, 0));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Cambio de paleta suave entre etapas */
+  .saga-root,
+  .saga-root * {
+    transition-property: background-color, color, border-color, fill, stroke;
+    transition-duration: 600ms;
+    transition-timing-function: ease;
+  }
+
+  .saga-progress-fill {
+    transition: transform 400ms ease;
+  }
+
+  .saga-ship {
+    transition: transform 800ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .saga-route {
+    transition:
+      stroke-dashoffset 800ms cubic-bezier(0.4, 0, 0.2, 1),
+      stroke 600ms ease;
+  }
+
+  /* Fallback: las etapas que no están activas se atenúan (lo controla JS con data-active) */
+  .saga-stage {
+    transition: opacity 400ms ease;
+  }
+
+  .saga-stage[data-active='false'] {
+    opacity: 0.55;
+  }
+
+  /* Con soporte: el progreso y la entrada de cada etapa van ligados al scroll, sin JS */
+  @supports (animation-timeline: view()) {
+    .saga-root {
+      timeline-scope: --saga-stages;
+    }
+
+    .saga-stages {
+      view-timeline: --saga-stages block;
+    }
+
+    .saga-progress-fill {
+      transition: none;
+      animation: saga-progress linear both;
+      animation-timeline: --saga-stages;
+      animation-range: contain 0% contain 100%;
+    }
+
+    .saga-stage-body {
+      animation: saga-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+
+@keyframes saga-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes saga-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(3rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* View Transition entre /sagas y /sagas/:id: sin animación si se pidió reducir movimiento */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
