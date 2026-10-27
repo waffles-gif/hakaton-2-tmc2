@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, ScrollRestoration } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 
 const links = [
@@ -42,6 +42,8 @@ export default function Layout() {
       <main className="mx-auto max-w-6xl p-6">
         <Outlet />
       </main>
+      {/* Al volver atrás (ej. del detalle al listado) recupera la posición del scroll */}
+      <ScrollRestoration />
     </div>
   )
 }
