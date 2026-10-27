@@ -2,10 +2,10 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import PrivateRoute from './auth/PrivateRoute'
 import PublicOnlyRoute from './auth/PublicOnlyRoute'
 import Layout from './components/Layout'
-import Placeholder from './components/Placeholder'
 import NewsFeedPage from './features/news/feed/NewsFeedPage'
 import NewsDetail from './features/news/NewsDetail'
 import SagasPage from './features/sagas/SagasPage'
+import SagaStoryPage from './features/sagas/SagaStoryPage'
 import WantedDetail from './features/wanted/WantedDetail'
 import WantedListPage from './features/wanted/WantedListPage'
 import Dashboard from './pages/Dashboard'
@@ -40,7 +40,7 @@ export const router = createBrowserRouter([
             children: [{ path: ':id', element: <NewsDetail /> }],
           },
           { path: '/sagas', element: <SagasPage /> },
-          { path: '/sagas/:id', element: <Placeholder name="Historia de la saga" /> },
+          { path: '/sagas/:id', element: <SagaStoryPage /> },
         ],
       },
     ],
