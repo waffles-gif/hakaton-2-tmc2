@@ -3,6 +3,7 @@ import PrivateRoute from './auth/PrivateRoute'
 import PublicOnlyRoute from './auth/PublicOnlyRoute'
 import Layout from './components/Layout'
 import Placeholder from './components/Placeholder'
+import NewsFeedPage from './features/news/feed/NewsFeedPage'
 import WantedDetail from './features/wanted/WantedDetail'
 import WantedListPage from './features/wanted/WantedListPage'
 import Dashboard from './pages/Dashboard'
@@ -30,8 +31,12 @@ export const router = createBrowserRouter([
           { path: '/dashboard', element: <Dashboard /> },
           { path: '/wanted', element: <WantedListPage /> },
           { path: '/wanted/:id', element: <WantedDetail /> },
-          { path: '/news', element: <Placeholder name="Noticias" /> },
-          { path: '/news/:id', element: <Placeholder name="Detalle de noticia" /> },
+          // El detalle es hija del feed: se pinta en su <Outlet> y el feed nunca se desmonta
+          {
+            path: '/news',
+            element: <NewsFeedPage />,
+            children: [{ path: ':id', element: <Placeholder name="Detalle de noticia" /> }],
+          },
           { path: '/sagas', element: <Placeholder name="Sagas" /> },
           { path: '/sagas/:id', element: <Placeholder name="Historia de la saga" /> },
         ],
