@@ -1,0 +1,15 @@
+/* View Transition API: animación entre el resumen de sagas y la historia.
+   Si el navegador no la soporta, React Router navega normal y estas reglas no aplican. */
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 350ms;
+}
+
+/* Con reduced motion no hay animación: el cambio de pantalla es instantáneo */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

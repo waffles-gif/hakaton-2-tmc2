@@ -4,6 +4,8 @@ import PublicOnlyRoute from './auth/PublicOnlyRoute'
 import Layout from './components/Layout'
 import Placeholder from './components/Placeholder'
 import NewsFeedPage from './features/news/feed/NewsFeedPage'
+import NewsDetail from './features/news/NewsDetail'
+import SagasPage from './features/sagas/SagasPage'
 import WantedDetail from './features/wanted/WantedDetail'
 import WantedListPage from './features/wanted/WantedListPage'
 import Dashboard from './pages/Dashboard'
@@ -35,9 +37,9 @@ export const router = createBrowserRouter([
           {
             path: '/news',
             element: <NewsFeedPage />,
-            children: [{ path: ':id', element: <Placeholder name="Detalle de noticia" /> }],
+            children: [{ path: ':id', element: <NewsDetail /> }],
           },
-          { path: '/sagas', element: <Placeholder name="Sagas" /> },
+          { path: '/sagas', element: <SagasPage /> },
           { path: '/sagas/:id', element: <Placeholder name="Historia de la saga" /> },
         ],
       },
